@@ -1,53 +1,6 @@
 import pinochle_engine as pe
 
 
-class Player:
-    def __init__(self, opening_hand, trump):
-        self.hand = []
-        self.set_hand(opening_hand)
-        self.trump = trump
-        self.organize_hand()
-
-    def set_hand(self, cards):  # cards is a []
-        self.hand = cards
-
-    def organize_hand(self):
-        hand_rank = []
-        for i in self.hand:
-            hand_rank.append(pe.get_rank(self.trump, i))
-        hand_rank.sort()
-        sorted_hand = []
-        for i in hand_rank:
-            sorted_hand.append(pe.get_card_from_rank(self.trump, i))
-        self.set_hand(sorted_hand)
-
-    def print_hand(self):
-        printable = '| '
-        for i in self.hand:
-            printable += i + ' '
-        printable += '|'
-        print(printable)
-
-    def update_hand(self, played_card, new_card):
-        self.hand.append(new_card)
-        self.hand.remove(played_card)
-        self.organize_hand()
-
-
-class Computer:
-    def __init__(self, hand, trump):
-        self.hand = []
-        self.set_hand(hand)
-        self.trump = trump
-
-    def set_hand(self, cards):  # cards is a []
-        self.hand = cards
-
-    def update_hand(self, played_card, new_card):
-        self.hand.append(new_card)
-        self.hand.remove(played_card)
-
-
 def input_player_card(hand):
     while True:
         card = input()
@@ -90,8 +43,8 @@ while True:  # this loop will eventually control the entire match
     else:
         print('The COMPUTER deals!')
     print('Trumps: ' + trump_card)
-    player = Player(player_hand, trump_card)
-    computer = Computer(computer_hand, trump_card)
+    player = pe.Player(player_hand, trump_card)
+    computer = pe.Computer(computer_hand, trump_card)
     while len(stock) > 0:  # this loop controls the individual game
         player.print_hand()
         p_card, c_card, first_draw = game_play(lead, computer.hand, player.hand, trump_card)
