@@ -51,6 +51,7 @@ class Computer:
         self.hand = []
         self.set_hand(hand)
         self.trump = trump
+        self.played_cards = []
 
     def set_hand(self, cards):  # cards is a []
         self.hand = cards
@@ -58,6 +59,10 @@ class Computer:
     def update_hand(self, played_card, new_card):
         self.hand.append(new_card)
         self.hand.remove(played_card)
+
+    def update_played_cards(self, player, computer):
+        self.played_cards.append(player)
+        self.played_cards(computer)
 
 
 def shuffle(deck):
@@ -153,5 +158,50 @@ def open_game(game_counter, trump):
         return True, False  # dealer, lead; True = computer, False = player
 
 
+def hand_contains_melds(hand, trump):
+    ranked_hand = []
+    has_melds = False
+    for i in hand:
+        ranked_hand.append(get_rank(trump, i))
+    royal_marriage = [2, 3]
+    marriage_one = [12, 15]
+    marriage_two = [13, 16]
+    marriage_three = [14, 17]
+    flush = [0, 1, 2, 3, 4]
+    aces = [0, 6, 7, 8]
+    kings = [2, 12, 13, 14]
+    queens = [3, 15, 16, 17]
+    jacks = [4, 18, 19, 20]
+    dix = [5]
+    melds = [royal_marriage, marriage_one, marriage_two, marriage_three, flush, aces, kings, queens, jacks, dix]
+    # if all of the ranks for a meld exist in the sub list, it will return True
+    for i in melds:
+        for ranks in i:
+            if ranks in ranked_hand:
+                has_melds = True
+            else:
+                has_melds = False
+                break
+        if has_melds:
+            break
+    # the pinochle meld is independent of rank, so it is done here with letters
+    if 'QS' in hand and 'JD' in hand:
+        has_melds = True
+    return has_melds
+
+
+# for lead: if false, -> player is lead; else -> computer
 def computer_plays(lead, hand, opponent_card, trump):
-    return hand[randint(0, len(hand) - 1)]
+    if not hand_contains_melds(hand):
+        ranked_hand = []
+        for i in hand:
+            ranked_hand.append(get_rank(trump, i))
+        ranked_hand.sort()
+        if not lead:
+            if ranked_hand[0] > get_rank(trump, opponent_card):
+                return get_card_from_rank(trump, ranked_hand[0])
+            else:
+                if get_card_from_rank(trump, ranked_hand[-1]) != '9D':
+                    return get_card_from_rank(trump, ranked_hand[-1])
+                else:
+                    return get_card_from_rank(trump, ranked_hand[-2])
