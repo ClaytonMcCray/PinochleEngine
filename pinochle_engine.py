@@ -190,13 +190,66 @@ def hand_contains_melds(hand, trump):
     return has_melds
 
 
+def find_best_meld(hand, trump):
+    ranked_hand = []
+    for i in hand:
+        ranked_hand.append(get_rank(trump, i))
+    royal_marriage = [2, 3]
+    marriage_one = [12, 15]
+    marriage_two = [13, 16]
+    marriage_three = [14, 17]
+    flush = [0, 1, 2, 3, 4]
+    aces = [0, 6, 7, 8]
+    kings = [2, 12, 13, 14]
+    queens = [3, 15, 16, 17]
+    jacks = [4, 18, 19, 20]
+    dix = [5]
+    melds = [royal_marriage, marriage_one, marriage_two, marriage_three, flush, aces, kings, queens, jacks, dix]
+    scores = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
+    point_values = []
+    cards = []
+    exists = False
+    for i in range(len(melds)):
+        for ranks in melds[i]:
+            if ranks in ranked_hand:
+                exists = True
+            else:
+                exists = False
+                break
+        if exists:
+            point_values.append(scores[i])
+            tmp = []
+            for c in melds[i]:
+                tmp.append(get_card_from_rank(trump, c))
+            cards.append(tmp)
+    unordered_points = point_values
+    point_values.sort()
+    highest_score = point_values[-1]
+    for i in range(len(unordered_points)):
+        for c in point_values:
+            if unordered_points[i] == c:
+                return highest_score, cards[i]
+
+
 # for lead: if false, -> player is lead; else -> computer
 def computer_plays(lead, hand, opponent_card, trump):
-    if not hand_contains_melds(hand):
-        ranked_hand = []
-        for i in hand:
-            ranked_hand.append(get_rank(trump, i))
-        ranked_hand.sort()
+    ranked_hand = []
+    for i in hand:
+        ranked_hand.append(get_rank(trump, i))
+    ranked_hand.sort()
+    if not hand_contains_melds(hand, trump):
+        if not lead:
+            if ranked_hand[0] > get_rank(trump, opponent_card):
+                return get_card_from_rank(trump, ranked_hand[0])
+            else:
+                if get_card_from_rank(trump, ranked_hand[-1]) != '9D':
+                    return get_card_from_rank(trump, ranked_hand[-1])
+                else:
+                    return get_card_from_rank(trump, ranked_hand[-2])
+    else:
+        meld_score, non_playable = find_best_meld(hand, trump)
+        for i in non_playable:
+            ranked_hand.remove(get_rank(trump, i))
         if not lead:
             if ranked_hand[0] > get_rank(trump, opponent_card):
                 return get_card_from_rank(trump, ranked_hand[0])
