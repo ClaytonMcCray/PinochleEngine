@@ -9,6 +9,7 @@ raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC', 'QC', 'JC', 
 
 class Variables:
     trump_is_dix = False  # this will track if dix is trump
+    stock = []
 
 #################################################################
 
@@ -69,6 +70,46 @@ class Computer:
 
     def get_hand(self):
         return self.hand
+
+    # for lead: if false, -> player is lead; else -> computer
+    def computer_plays(self, lead, opponent_card):
+        ranked_hand = []
+        for i in self.hand:
+            ranked_hand.append(get_rank(self.trump, i))
+        ranked_hand.sort()
+        if not hand_contains_melds(self.hand, self.trump):
+            if not lead:
+                if ranked_hand[0] < get_rank(self.trump, opponent_card):
+                    return get_card_from_rank(self.trump, ranked_hand[0])
+                else:
+                    if get_card_from_rank(self.trump, ranked_hand[-1]) != '9D':
+                        return get_card_from_rank(self.trump, ranked_hand[-1])
+                    else:
+                        return get_card_from_rank(self.trump, ranked_hand[-2])
+            else:  # if the computer leads with no melds, play the strongest card it has
+                return get_card_from_rank(self.trump, ranked_hand[0])
+        else:
+            meld_score, high_meld, non_playable, pinochle = find_best_meld(self.hand, self.trump)
+            # the nested for loop below removes all the cards that match a meld from the hand
+            if pinochle:  # removes a pinochle if it's in the hand
+                ranked_hand.remove(get_rank(self.trump, 'QS'))
+                ranked_hand.remove(get_rank(self.trump, 'JD'))
+            for meld in non_playable:
+                for card in meld:
+                    try:  # this is because if a card exists in multiple melds, it might have already been removed
+                        ranked_hand.remove(get_rank(self.trump, card))
+                    except ValueError:
+                        pass
+            if not lead:
+                if ranked_hand[0] < get_rank(self.trump, opponent_card):
+                    return get_card_from_rank(self.trump, ranked_hand[0])
+                else:
+                    if get_card_from_rank(self.trump, ranked_hand[-1]) != '9D':
+                        return get_card_from_rank(self.trump, ranked_hand[-1])
+                    else:
+                        return get_card_from_rank(self.trump, ranked_hand[-2])
+            else:  # play strongest hand not part of existing meld
+                return get_card_from_rank(self.trump, ranked_hand[0])
 
 
 def shuffle(deck):
@@ -241,42 +282,4 @@ def find_best_meld(hand, trump):
             # pinochle
 
 
-# for lead: if false, -> player is lead; else -> computer
-def computer_plays(lead, hand, opponent_card, trump):
-    ranked_hand = []
-    for i in hand:
-        ranked_hand.append(get_rank(trump, i))
-    ranked_hand.sort()
-    if not hand_contains_melds(hand, trump):
-        if not lead:
-            if ranked_hand[0] < get_rank(trump, opponent_card):
-                return get_card_from_rank(trump, ranked_hand[0])
-            else:
-                if get_card_from_rank(trump, ranked_hand[-1]) != '9D':
-                    return get_card_from_rank(trump, ranked_hand[-1])
-                else:
-                    return get_card_from_rank(trump, ranked_hand[-2])
-        else:  # if the computer leads with no melds, play the strongest card it has
-            return get_card_from_rank(trump, ranked_hand[0])
-    else:
-        meld_score, high_meld, non_playable, pinochle = find_best_meld(hand, trump)
-        # the nested for loop below removes all the cards that match a meld from the hand
-        if pinochle:  # removes a pinochle if it's in the hand
-            ranked_hand.remove(get_rank(trump, 'QS'))
-            ranked_hand.remove(get_rank(trump, 'JD'))
-        for meld in non_playable:
-            for card in meld:
-                try:  # this is because if a card exists in multiple melds, it might have already been removed
-                    ranked_hand.remove(get_rank(trump, card))
-                except ValueError:
-                    pass
-        if not lead:
-            if ranked_hand[0] < get_rank(trump, opponent_card):
-                return get_card_from_rank(trump, ranked_hand[0])
-            else:
-                if get_card_from_rank(trump, ranked_hand[-1]) != '9D':
-                    return get_card_from_rank(trump, ranked_hand[-1])
-                else:
-                    return get_card_from_rank(trump, ranked_hand[-2])
-        else:  # play strongest hand not part of existing meld
-            return get_card_from_rank(trump, ranked_hand[0])
+
