@@ -10,6 +10,18 @@ raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC', 'QC', 'JC', 
 class Variables:
     trump_is_dix = False  # this will track if dix is trump
     stock = []
+    royal_marriage = [2, 3]
+    marriage_one = [12, 15]
+    marriage_two = [13, 16]
+    marriage_three = [14, 17]
+    flush = [0, 1, 2, 3, 4]
+    aces = [0, 6, 7, 8]
+    kings = [2, 12, 13, 14]
+    queens = [3, 15, 16, 17]
+    jacks = [4, 18, 19, 20]
+    dix = [5]
+    scores = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
+    trick_winner = False
 
 #################################################################
 
@@ -48,6 +60,13 @@ class Player:
         self.hand.append(new_card)
         self.hand.remove(played_card)
         self.organize_hand()
+
+    def hand_contains(self, cards):
+        tmp = False
+        for i in cards:
+            if i in self.hand:
+                tmp = True
+        return tmp
 
 
 class Computer:
@@ -210,17 +229,9 @@ def hand_contains_melds(hand, trump):
     has_melds = False
     for i in hand:
         ranked_hand.append(get_rank(trump, i))
-    royal_marriage = [2, 3]
-    marriage_one = [12, 15]
-    marriage_two = [13, 16]
-    marriage_three = [14, 17]
-    flush = [0, 1, 2, 3, 4]
-    aces = [0, 6, 7, 8]
-    kings = [2, 12, 13, 14]
-    queens = [3, 15, 16, 17]
-    jacks = [4, 18, 19, 20]
-    dix = [5]
-    melds = [royal_marriage, marriage_one, marriage_two, marriage_three, flush, aces, kings, queens, jacks, dix]
+    melds = [Variables.royal_marriage, Variables.marriage_one, Variables.marriage_two,
+             Variables.marriage_three, Variables.flush, Variables.aces, Variables.kings, Variables.queens,
+             Variables.jacks, Variables.dix]
     # if all of the ranks for a meld exist in the sub list, it will return True
     for i in melds:
         for ranks in i:
@@ -241,19 +252,10 @@ def find_best_meld(hand, trump):
     ranked_hand = []
     for i in hand:
         ranked_hand.append(get_rank(trump, i))
-    royal_marriage = [2, 3]
-    marriage_one = [12, 15]
-    marriage_two = [13, 16]
-    marriage_three = [14, 17]
-    flush = [0, 1, 2, 3, 4]
-    aces = [0, 6, 7, 8]
-    kings = [2, 12, 13, 14]
-    queens = [3, 15, 16, 17]
-    jacks = [4, 18, 19, 20]
-    dix = [5]
     pinochle = False
-    melds = [royal_marriage, marriage_one, marriage_two, marriage_three, flush, aces, kings, queens, jacks, dix]
-    scores = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
+    melds = [Variables.royal_marriage, Variables.marriage_one, Variables.marriage_two,
+             Variables.marriage_three, Variables.flush, Variables.aces, Variables.kings, Variables.queens,
+             Variables.jacks, Variables.dix]
     point_values = []
     cards = []
     exists = False
@@ -267,7 +269,7 @@ def find_best_meld(hand, trump):
                 exists = False
                 break
         if exists:
-            point_values.append(scores[i])
+            point_values.append(Variables.scores[i])
             tmp = []  # holds the card names of the cards in the current meld
             for c in melds[i]:
                 tmp.append(get_card_from_rank(trump, c))

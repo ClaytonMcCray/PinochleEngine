@@ -18,26 +18,27 @@ def game_play(lead_player, comp_hand, p_hand, trump):
         print('YOU played: ' + player_card + '\tCOMPUTER played: ' + computer_card)
         if pe.get_rank(trump_card, player_card) <= pe.get_rank(trump_card, computer_card):
             print('YOU won this trick!')
-            winner = False
+            pe.Variables.trick_winner = False
         else:
             print('COMPUTER won this trick!')
-            winner = True
+            pe.Variables.trick_winner = True
     else:
         computer_card = computer.computer_plays(lead_player, 'comp_is_lead')
         print('COMPUTER played: ' + computer_card)
         player_card = input_player_card(p_hand)
         if pe.get_rank(trump_card, computer_card) <= pe.get_rank(trump_card, player_card):
             print('COMPUTER won this trick!')
-            winner = True
+            pe.Variables.trick_winner = True
         else:
             print('YOU won this trick!')
-            winner = False
-    return player_card, computer_card, winner  # winner is the winner of the trick, True = computer
+            pe.Variables.trick_winner = False
+    return player_card, computer_card  # winner is the winner of the trick, True = computer
 
 game_count = 0  # this will determine whose turn it is to deal
 while True:  # this loop will eventually control the entire match
     computer_hand, player_hand, pe.Variables.stock, trump_card = pe.deal(pe.shuffle(pe.raw_deck))
     dealer, lead = pe.open_game(game_count, trump_card)  # dealer = False -> player, else: -> computer
+    game_count += 1  # so that on the next game, the dealer switches
     if not dealer:  # i.e. player is the dealer
         print('YOU are the dealer!')
     else:
@@ -47,13 +48,19 @@ while True:  # this loop will eventually control the entire match
     computer = pe.Computer(computer_hand, trump_card)
     while len(pe.Variables.stock) > 0:  # this loop controls the individual game
         player.print_hand()
-        p_card, c_card, first_draw = game_play(lead, computer.hand, player.hand, trump_card)
-        if not first_draw:
+        p_card, c_card = game_play(lead, computer.hand, player.hand, trump_card)
+        if not pe.Variables.trick_winner:
             player.update_hand(p_card, pe.Variables.stock.pop(0))
             computer.update_hand(c_card, pe.Variables.stock.pop(0))
+            print(player.get_hand())
+            melds = input('What would you meld?\n').split(' ')
+            # TODO work on melding below
+            if player.hand_contains(melds):
+                print()
         else:
             computer.update_hand(c_card, pe.Variables.stock.pop(0))
             player.update_hand(p_card, pe.Variables.stock.pop(0))
+
 
 
     break
