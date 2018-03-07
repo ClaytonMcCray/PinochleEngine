@@ -25,17 +25,21 @@ class Variables:
     dix = [5]
     meld_score_values = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
     ############################################################
-    trick_winner = False
+    trick_winner = ''
+    dealer = 'player'  # opening value to be edited by game
+    lead = 'computer'  # opening value to be edited by game
 
 #################################################################
 
 
 class Player:
-    def __init__(self, opening_hand, trump):
+    def __init__(self, opening_hand, trump, score):
         self.hand = []
         self.set_hand(opening_hand)
         self.trump = trump
         self.organize_hand()
+        self.score = score
+        self.won_cards = []
 
     def set_hand(self, cards):  # cards is a []
         self.hand = cards
@@ -53,13 +57,6 @@ class Player:
             sorted_hand.append(get_card_from_rank(self.trump, i))
         self.set_hand(sorted_hand)
 
-    def print_hand(self):
-        printable = '| '
-        for i in self.hand:
-            printable += i + ' '
-        printable += '|'
-        print(printable)
-
     def update_hand(self, played_card, new_card):
         self.hand.append(new_card)
         self.hand.remove(played_card)
@@ -72,16 +69,26 @@ class Player:
                 tmp = True
         return tmp
 
+    def set_won_cards(self, cards):
+        for i in cards:
+            self.won_cards.append(i)
+
 
 class Computer:
-    def __init__(self, hand, trump):
+    def __init__(self, hand, trump, score):
+        self.score = score
         self.hand = []
         self.set_hand(hand)
         self.trump = trump
         self.played_cards = []
+        self.won_cards = []
 
     def set_hand(self, cards):  # cards is a []
         self.hand = cards
+
+    def set_won_cards(self, cards):
+        for i in cards:
+            self.won_cards.append(i)
 
     def update_hand(self, played_card, new_card):
         self.hand.append(new_card)
@@ -95,7 +102,7 @@ class Computer:
         return self.hand
 
     # for lead: if false, -> player is lead; else -> computer
-    def computer_plays(self, lead, opponent_card):
+    def computer_plays(self, lead, opponent_card=''):
         ranked_hand = []
         for i in self.hand:
             ranked_hand.append(get_rank(self.trump, i))
@@ -296,16 +303,18 @@ def get_suit(card):
         return 'hearts'
     elif 'D' in card:
         return 'diamonds'
+    elif 'C' in card:
+        return 'clubs'
     else:
         raise IndexError('Must call on a card object!')
 
 
 # returns True if lead wins, False if follower wins
-def determine_winner(lead, follower, trump):
-    lead_suit = get_suit(lead)
-    follower_suit = get_suit(follower)
+def determine_winner(lead_card, follower_card, trump):
+    lead_suit = get_suit(lead_card)
+    follower_suit = get_suit(follower_card)
     trump_suit = get_suit(trump)
-    if get_rank(lead, trump) <= get_rank(follower, trump):  # the lead played a higher card
+    if get_rank(lead_card, trump) <= get_rank(follower_card, trump):  # the lead played a higher card
         return True
     else:  # the follower played a higher card
         if (lead_suit == follower_suit) or (follower_suit == trump_suit):  # check that leader followed suit or trumped
@@ -314,3 +323,12 @@ def determine_winner(lead, follower, trump):
             return True
 
 
+# this is where one of the players has gone over the match_points score
+def is_match_over(match_points, current_scores):
+    # check that at least one player is over match points
+    if current_scores[0] >= match_points or current_scores[1] >= match_points:
+        # check that ONLY one player is over match points
+        if current_scores[0] < match_points or current_scores[1] < match_points:
+            return True
+        else:
+            return False
