@@ -34,6 +34,7 @@ def game_play(lead_player, comp_hand, p_hand, trump):
             pe.Variables.trick_winner = False
     return player_card, computer_card  # winner is the winner of the trick, True = computer
 
+
 game_count = 0  # this will determine whose turn it is to deal
 while True:  # this loop will eventually control the entire match
     computer_hand, player_hand, pe.Variables.stock, trump_card = pe.deal(pe.shuffle(pe.raw_deck))

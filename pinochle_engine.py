@@ -10,6 +10,9 @@ raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC', 'QC', 'JC', 
 class Variables:
     trump_is_dix = False  # this will track if dix is trump
     stock = []
+    # melds ####################################################
+    # Note that the pinochle meld is not included because it is independent
+    # of trump (and therefore rank values)
     royal_marriage = [2, 3]
     marriage_one = [12, 15]
     marriage_two = [13, 16]
@@ -20,7 +23,8 @@ class Variables:
     queens = [3, 15, 16, 17]
     jacks = [4, 18, 19, 20]
     dix = [5]
-    scores = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
+    meld_score_values = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
+    ############################################################
     trick_winner = False
 
 #################################################################
@@ -269,7 +273,7 @@ def find_best_meld(hand, trump):
                 exists = False
                 break
         if exists:
-            point_values.append(Variables.scores[i])
+            point_values.append(Variables.meld_score_values[i])
             tmp = []  # holds the card names of the cards in the current meld
             for c in melds[i]:
                 tmp.append(get_card_from_rank(trump, c))
