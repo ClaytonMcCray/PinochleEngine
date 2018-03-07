@@ -288,4 +288,29 @@ def find_best_meld(hand, trump):
             # pinochle
 
 
+# check the suit of a given card. this will regulate the way it is handled
+def get_suit(card):
+    if 'S' in card:
+        return 'spades'
+    elif 'H' in card:
+        return 'hearts'
+    elif 'D' in card:
+        return 'diamonds'
+    else:
+        raise IndexError('Must call on a card object!')
+
+
+# returns True if lead wins, False if follower wins
+def determine_winner(lead, follower, trump):
+    lead_suit = get_suit(lead)
+    follower_suit = get_suit(follower)
+    trump_suit = get_suit(trump)
+    if get_rank(lead, trump) <= get_rank(follower, trump):  # the lead played a higher card
+        return True
+    else:  # the follower played a higher card
+        if (lead_suit == follower_suit) or (follower_suit == trump_suit):  # check that leader followed suit or trumped
+            return False
+        else:
+            return True
+
 
