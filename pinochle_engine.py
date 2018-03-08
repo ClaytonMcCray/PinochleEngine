@@ -24,6 +24,7 @@ class Variables:
     jacks = [4, 18, 19, 20]
     dix = [5]
     meld_score_values = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
+    melds = [royal_marriage, marriage_one, marriage_two, marriage_three, flush, aces, kings, queens, jacks, dix]
     ############################################################
     trick_winner = ''
     dealer = 'player'  # opening value to be edited by game
@@ -40,6 +41,34 @@ class Player:
         self.organize_hand()
         self.score = score
         self.won_cards = []
+        self.melds = []
+
+    def set_melds(self, attempt):
+        ind_meld = []  # tmp to hold tokens from attempt after removed from self.hand
+        success = False  # success of the meld i.e. was the meld real
+        # make sure that the attempted cards were actually in the players hand; if so, add to ind_meld, pop from hand
+        for i in range(len(attempt)):
+            for j in range(len(self.hand)):
+                if attempt[i] == self.hand[j]:
+                    ind_meld.append(self.hand.pop(j))
+        rank_ind_meld = []  # tmp to hold ranked version of the meld
+        for card in ind_meld:
+            rank_ind_meld.append(get_rank(self.trump, card))
+        # check that the meld is a real meld option
+        for i in range(len(Variables.melds)):
+            if rank_ind_meld == Variables.melds[i]:
+                self.melds.append(rank_ind_meld)
+                meld_score_index = i
+                success = True
+                break
+        if success:
+            self.score += Variables.meld_score_values[meld_score_index]
+            return True
+        else:
+            for i in ind_meld:  # put unmelded cards back in the players hand
+                self.hand.append(i)
+            self.organize_hand()
+            return False
 
     def set_hand(self, cards):  # cards is a []
         self.hand = cards
@@ -73,6 +102,9 @@ class Player:
         for i in cards:
             self.won_cards.append(i)
 
+    def get_playable_cards(self):
+        return [self.hand, self.melds]
+
 
 class Computer:
     def __init__(self, hand, trump, score):
@@ -82,6 +114,10 @@ class Computer:
         self.trump = trump
         self.played_cards = []
         self.won_cards = []
+        self.melds = []
+
+    def get_playable_cards(self):
+        return [self.hand, self.melds]
 
     def set_hand(self, cards):  # cards is a []
         self.hand = cards
@@ -230,9 +266,9 @@ def open_game(game_counter, trump):
         Variables.trump_is_dix = True
 
     if game_counter % 2 == 0:
-        return False, True  # dealer, lead; True = computer, False = player
+        return 'player', 'computer'  # dealer, lead; True = computer, False = player
     else:
-        return True, False  # dealer, lead; True = computer, False = player
+        return 'computer', 'player'  # dealer, lead; True = computer, False = player
 
 
 def hand_contains_melds(hand, trump):
@@ -240,11 +276,8 @@ def hand_contains_melds(hand, trump):
     has_melds = False
     for i in hand:
         ranked_hand.append(get_rank(trump, i))
-    melds = [Variables.royal_marriage, Variables.marriage_one, Variables.marriage_two,
-             Variables.marriage_three, Variables.flush, Variables.aces, Variables.kings, Variables.queens,
-             Variables.jacks, Variables.dix]
     # if all of the ranks for a meld exist in the sub list, it will return True
-    for i in melds:
+    for i in Variables.melds:
         for ranks in i:
             if ranks in ranked_hand:
                 has_melds = True
@@ -253,7 +286,7 @@ def hand_contains_melds(hand, trump):
                 break
         if has_melds:
             break
-    # the pinochle meld is independent of rank, so it is done here with letters
+    # the pinochle meld is independent of rank, so it is done here with tokens
     if 'QS' in hand and 'JD' in hand:
         has_melds = True
     return has_melds
@@ -264,16 +297,13 @@ def find_best_meld(hand, trump):
     for i in hand:
         ranked_hand.append(get_rank(trump, i))
     pinochle = False
-    melds = [Variables.royal_marriage, Variables.marriage_one, Variables.marriage_two,
-             Variables.marriage_three, Variables.flush, Variables.aces, Variables.kings, Variables.queens,
-             Variables.jacks, Variables.dix]
     point_values = []
     cards = []
     exists = False
     if 'QS' in hand and 'JD' in hand:
         pinochle = True
-    for i in range(len(melds)):
-        for ranks in melds[i]:
+    for i in range(len(Variables.melds)):
+        for ranks in Variables.melds[i]:
             if ranks in ranked_hand:
                 exists = True
             else:
@@ -282,7 +312,7 @@ def find_best_meld(hand, trump):
         if exists:
             point_values.append(Variables.meld_score_values[i])
             tmp = []  # holds the card names of the cards in the current meld
-            for c in melds[i]:
+            for c in Variables.melds[i]:
                 tmp.append(get_card_from_rank(trump, c))
             cards.append(tmp)
     unordered_points = point_values

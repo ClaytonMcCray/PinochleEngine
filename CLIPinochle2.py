@@ -4,9 +4,16 @@ import pinochle_engine as pe
 # useful functions unrelated to actual gameplay ###############
 def print_hand(hand):
     printable = '| '
-    for i in hand:
+    for i in hand[0]:
         printable += i + ' '
     printable += '|'
+    # Add melds to the right
+    printable += '\t'
+    for i in hand[1]:
+        printable += '|| '
+        for j in i:
+            printable += j + ' '
+    printable += '||'
     print(printable)
 
 
@@ -55,6 +62,7 @@ def game_play(match_points, current_scores):
         # THE PLAY #########################################################
         while len(stock) > 0:
             # TRICK TAKING #################################################
+            print('Trump is: ' + trump)
             print('YOUR hand:')
             player.organize_hand()
             print_hand(player.get_hand())
@@ -107,6 +115,13 @@ def game_play(match_points, current_scores):
             # (2) score melds
             # (3) check that won cards are being collected with print statements
             # (4) Note that drawing cards was included in TRICK TAKING
+            # (5) Test the new player.set_melds()
+            # (6) Figure out how to change all things that rely on player/computer.hand to .get_playable_cards()
+            #   (6.1) This will include removing played cards from the hand in update_hand for both Computer and Player
+            # (7) Add a set_melds to Computer (might not need to be as robust b/c of hand_contains_melds)
+            # BEGIN MELDING ##############################################
+
+
 
 
 
