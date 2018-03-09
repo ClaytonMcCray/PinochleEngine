@@ -1,5 +1,12 @@
 from random import randint
 
+# TODO ########################################################
+# (1) Need to be able to play cards that have already been melded
+# (2) See TODO in find_best_meld
+# (3) Add option to swap dix for trump (also double check official rules about that)
+# (4) See TODO in CLIPinochle2.py
+#################################################################
+
 raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC', 'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD',
             '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H', 'AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC',
             'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD', '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H']
@@ -43,29 +50,24 @@ class Player:
         self.won_cards = []
         self.melds = []
 
+    def get_score(self):
+        return self.score
+
     def set_melds(self, attempt):
         ind_meld = []  # tmp to hold tokens from attempt after removed from self.hand
-        success = False  # success of the meld i.e. was the meld real
         # make sure that the attempted cards were actually in the players hand; if so, add to ind_meld, pop from hand
-        for i in range(len(attempt)):
-            for j in range(len(self.hand)):
-                if attempt[i] == self.hand[j]:
-                    ind_meld.append(self.hand.pop(j))
-        rank_ind_meld = []  # tmp to hold ranked version of the meld
-        for card in ind_meld:
-            rank_ind_meld.append(get_rank(self.trump, card))
-        # check that the meld is a real meld option
-        for i in range(len(Variables.melds)):
-            if rank_ind_meld == Variables.melds[i]:
-                self.melds.append(rank_ind_meld)
-                meld_score_index = i
-                success = True
-                break
+        for i in attempt:
+            for j in self.hand:
+                if i == j:
+                    ind_meld.append(j)
+                    self.hand.remove(j)
+        score, success = get_meld_score(ind_meld, self.trump)
         if success:
-            self.score += Variables.meld_score_values[meld_score_index]
+            self.score += score
+            self.melds.append(ind_meld)
             return True
         else:
-            for i in ind_meld:  # put unmelded cards back in the players hand
+            for i in ind_meld:  # put un-melded cards back in the players hand
                 self.hand.append(i)
             self.organize_hand()
             return False
@@ -77,19 +79,49 @@ class Player:
         return self.hand
 
     def organize_hand(self):
-        hand_rank = []
-        for i in self.hand:
-            hand_rank.append(get_rank(self.trump, i))
-        hand_rank.sort()
+        # these first few lines filter out the trump suit so it can go first
+        suits = ['spades', 'hearts', 'clubs', 'diamonds']
+        trump_suit = get_suit(self.trump)
+        suits.remove(trump_suit)
         sorted_hand = []
-        for i in hand_rank:
-            sorted_hand.append(get_card_from_rank(self.trump, i))
-        self.set_hand(sorted_hand)
+        tmp_sorted = []
+        # manually set the trumps
+        for i in self.hand:
+            if get_suit(i) == trump_suit:
+                tmp_sorted.append(get_rank(self.trump, i))
+        tmp_sorted.sort()
+        for card in tmp_sorted:
+            sorted_hand.append(card)
+        tmp_sorted = []
+        for i in suits:  # now the rest of the cards will get sorted behind the trump
+            for j in self.hand:
+                if get_suit(j) == i:
+                    tmp_sorted.append(get_rank(self.trump, j))
+            tmp_sorted.sort()
+            for card in tmp_sorted:
+                sorted_hand.append(card)
+            tmp_sorted = []
+        token_sorted_hand = []
+        for rank in sorted_hand:
+            token_sorted_hand.append(get_card_from_rank(self.trump, rank))
+        self.set_hand(token_sorted_hand)
 
     def update_hand(self, played_card, new_card):
-        self.hand.append(new_card)
-        self.hand.remove(played_card)
-        self.organize_hand()
+        # checks the hand and the melds for the played card
+        found_card = False
+        if played_card in self.hand:
+            self.hand.remove(played_card)
+            found_card = True
+        else:
+            for i in self.melds:
+                if played_card in i:
+                    i.remove(played_card)
+                    found_card = True
+        if found_card:
+            self.hand.append(new_card)
+            self.organize_hand()
+        else:
+            raise IndexError('Card Not Found!')
 
     def hand_contains(self, cards):
         tmp = False
@@ -102,8 +134,17 @@ class Player:
         for i in cards:
             self.won_cards.append(i)
 
-    def get_playable_cards(self):
-        return [self.hand, self.melds]
+    def get_playable_cards(self, one_d_list=False):  # unlike Computer, Player defaults to a 1D list
+        cards = []
+        if one_d_list:
+            for i in self.hand:
+                cards.append(i)
+            for j in self.melds:
+                for q in j:
+                    cards.append(q)
+        else:
+            cards = [self.hand, self.melds]
+        return cards
 
 
 class Computer:
@@ -116,8 +157,20 @@ class Computer:
         self.won_cards = []
         self.melds = []
 
-    def get_playable_cards(self):
-        return [self.hand, self.melds]
+    def get_score(self):
+        return self.score
+
+    def get_playable_cards(self, one_d_list=True):  # unlike Player, Computer defaults to a 1D list
+        cards = []
+        if one_d_list:
+            for i in self.hand:
+                cards.append(i)
+            for j in self.melds:
+                for q in j:
+                    cards.append(q)
+        else:
+            cards = [self.hand, self.melds]
+        return cards
 
     def set_hand(self, cards):  # cards is a []
         self.hand = cards
@@ -127,8 +180,14 @@ class Computer:
             self.won_cards.append(i)
 
     def update_hand(self, played_card, new_card):
+        # this checks melds and the hand for the played card
+        if played_card in self.hand:
+            self.hand.remove(played_card)
+        else:
+            for i in self.melds:
+                if played_card in i:
+                    i.remove(played_card)
         self.hand.append(new_card)
-        self.hand.remove(played_card)
 
     def update_played_cards(self, player, computer):
         self.played_cards.append(player)
@@ -140,12 +199,12 @@ class Computer:
     # for lead: if false, -> player is lead; else -> computer
     def computer_plays(self, lead, opponent_card=''):
         ranked_hand = []
-        for i in self.hand:
+        for i in self.get_playable_cards():
             ranked_hand.append(get_rank(self.trump, i))
-        ranked_hand.sort()
-        if not hand_contains_melds(self.hand, self.trump):
-            if not lead:
-                if ranked_hand[0] < get_rank(self.trump, opponent_card):
+        ranked_hand.sort()  # ranked hand contains melds if they exist
+        if not hand_contains_melds(self.hand, self.trump):  # unedited as of the addition of get_playable_cards
+            if not lead:                                        # because if it doesn't contain melds,
+                if ranked_hand[0] < get_rank(self.trump, opponent_card):  # then self.hand == ranked_hand (in tokens)
                     return get_card_from_rank(self.trump, ranked_hand[0])
                 else:
                     if get_card_from_rank(self.trump, ranked_hand[-1]) != '9D':
@@ -154,12 +213,15 @@ class Computer:
                         return get_card_from_rank(self.trump, ranked_hand[-2])
             else:  # if the computer leads with no melds, play the strongest card it has
                 return get_card_from_rank(self.trump, ranked_hand[0])
-        else:
+        else:                       # all of this should still work because non-melded cards aren't considered
             meld_score, high_meld, non_playable, pinochle = find_best_meld(self.hand, self.trump)
             # the nested for loop below removes all the cards that match a meld from the hand
             if pinochle:  # removes a pinochle if it's in the hand
                 ranked_hand.remove(get_rank(self.trump, 'QS'))
                 ranked_hand.remove(get_rank(self.trump, 'JD'))
+            # TESTING #############################
+            print(non_playable)
+            ##########################################
             for meld in non_playable:
                 for card in meld:
                     try:  # this is because if a card exists in multiple melds, it might have already been removed
@@ -176,6 +238,22 @@ class Computer:
                         return get_card_from_rank(self.trump, ranked_hand[-2])
             else:  # play strongest hand not part of existing meld
                 return get_card_from_rank(self.trump, ranked_hand[0])
+
+    def set_melds(self):
+        if hand_contains_melds(self.hand, self.trump):  # hand_contains_melds should return a list
+            _, tmp_meld, __, ___ = find_best_meld(self.hand, self.trump)
+            self.melds.append(tmp_meld)
+            # remove melded cards from hand
+            for i in tmp_meld:
+                self.hand.remove(i)
+            score, ____ = get_meld_score(tmp_meld, self.trump)
+            self.score += score
+            return True
+        else:
+            return False
+
+    def get_melds(self):
+        return self.melds
 
 
 def shuffle(deck):
@@ -223,19 +301,20 @@ def get_rank(trump, card):  # smaller ranks mean more powerful cards
     s_trump = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AH', 'AC', 'AD', '10H', '10C', '10D', 'KH', 'KC', 'KD', 'QH',
                'QC', 'QD', 'JH', 'JC', 'JD', '9H', '9C', '9D']
 
-    if 'D' in trump:
+    trump_suit = get_suit(trump)
+    if trump_suit == 'diamonds':
         for i in range(len(d_trump)):
             if d_trump[i] == card:
                 return i
-    elif 'C' in trump:
+    elif trump_suit == 'clubs':
         for i in range(len(c_trump)):
             if c_trump[i] == card:
                 return i
-    elif 'H' in trump:
+    elif trump_suit == 'hearts':
         for i in range(len(h_trump)):
             if h_trump[i] == card:
                 return i
-    elif 'S' in trump:
+    elif trump_suit == 'spades':
         for i in range(len(s_trump)):
             if s_trump[i] == card:
                 return i
@@ -251,17 +330,18 @@ def get_card_from_rank(trump, rank):
     s_trump = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AH', 'AC', 'AD', '10H', '10C', '10D', 'KH', 'KC', 'KD', 'QH',
                'QC', 'QD', 'JH', 'JC', 'JD', '9H', '9C', '9D']
 
-    if 'D' in trump:
+    trump_suit = get_suit(trump)
+    if trump_suit == 'diamonds':
         return d_trump[rank]
-    elif 'C' in trump:
+    elif trump_suit == 'clubs':
         return c_trump[rank]
-    elif 'H' in trump:
+    elif trump_suit == 'hearts':
         return h_trump[rank]
-    elif 'S' in trump:
+    elif trump_suit == 'spades':
         return s_trump[rank]
 
 
-def open_game(game_counter, trump):
+def open_game(trump, game_counter=0):
     if '9' in trump:
         Variables.trump_is_dix = True
 
@@ -317,12 +397,24 @@ def find_best_meld(hand, trump):
             cards.append(tmp)
     unordered_points = point_values
     point_values.sort()
-    highest_score = point_values[-1]
-    for i in range(len(unordered_points)):
-        for q in point_values:
-            if unordered_points[i] == q:
-                return highest_score, cards[i], cards, pinochle  # point value of highest meld, highest meld, all melds,
+    try:  # I'm pretty sure that this will throw an error if the hand contains no melds. Hence the try
+        highest_score = point_values[-1]
+    except IndexError:
+        highest_score = 0
+    #for i in range(len(unordered_points)):
+    #    for q in point_values:
+    #        if unordered_points[i] == q:
+    #            print(q)
+    #            print('also fml tbh')
+    #            return highest_score, cards[i], cards, pinochle  # point value of highest meld, highest meld, all melds,
             # pinochle
+    #        else:
+    #            print('fml')
+    # TODO ################################
+    # This method keeps occasionally throwing a non-iterable nonetype error. IDK why. Maybe try wrapping
+    # the problem lines with try/except just to see what happens if you ignore it? All of the original code is
+    # commented out above. Notably, everything returns correctly except cards[i] which is supposed to be the highest
+    # meld
 
 
 # check the suit of a given card. this will regulate the way it is handled
@@ -344,7 +436,7 @@ def determine_winner(lead_card, follower_card, trump):
     lead_suit = get_suit(lead_card)
     follower_suit = get_suit(follower_card)
     trump_suit = get_suit(trump)
-    if get_rank(lead_card, trump) <= get_rank(follower_card, trump):  # the lead played a higher card
+    if get_rank(trump, lead_card) <= get_rank(trump, follower_card):  # the lead played a higher card
         return True
     else:  # the follower played a higher card
         if (lead_suit == follower_suit) or (follower_suit == trump_suit):  # check that leader followed suit or trumped
@@ -362,3 +454,21 @@ def is_match_over(match_points, current_scores):
             return True
         else:
             return False
+
+
+# it is important to remember that this method takes TOKENS not ranked cards
+def get_meld_score(meld_tokens, trump):
+    rank_ind_meld = []  # tmp to hold ranked version of the meld
+    for card in meld_tokens:
+        rank_ind_meld.append(get_rank(trump, card))
+    # check that the meld is a real meld option
+    for i in range(len(Variables.melds)):
+        if rank_ind_meld == Variables.melds[i]:
+            meld_score_index = i
+            success = True
+            break
+    try:
+        return Variables.meld_score_values[meld_score_index], success
+    except NameError:
+        return 0, False
+
