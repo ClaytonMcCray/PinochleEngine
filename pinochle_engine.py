@@ -219,9 +219,6 @@ class Computer:
             if pinochle:  # removes a pinochle if it's in the hand
                 ranked_hand.remove(get_rank(self.trump, 'QS'))
                 ranked_hand.remove(get_rank(self.trump, 'JD'))
-            # TESTING #############################
-            print(non_playable)
-            ##########################################
             for meld in non_playable:
                 for card in meld:
                     try:  # this is because if a card exists in multiple melds, it might have already been removed
@@ -401,20 +398,42 @@ def find_best_meld(hand, trump):
         highest_score = point_values[-1]
     except IndexError:
         highest_score = 0
-    #for i in range(len(unordered_points)):
-    #    for q in point_values:
-    #        if unordered_points[i] == q:
-    #            print(q)
-    #            print('also fml tbh')
-    #            return highest_score, cards[i], cards, pinochle  # point value of highest meld, highest meld, all melds,
-            # pinochle
-    #        else:
-    #            print('fml')
+    for i in range(len(unordered_points)):
+        for q in point_values:
+            if unordered_points[i] == q:
+                return highest_score, cards[i], cards, pinochle  # point value of highest meld, highest meld, all melds,
     # TODO ################################
     # This method keeps occasionally throwing a non-iterable nonetype error. IDK why. Maybe try wrapping
     # the problem lines with try/except just to see what happens if you ignore it? All of the original code is
     # commented out above. Notably, everything returns correctly except cards[i] which is supposed to be the highest
     # meld
+    ''' The Error Message in full:
+    (4)
+    Trump is: AS
+    YOUR cards:
+    | KS JS JS 10H KH AC 9C AD |	|| KH QH || KC QC ||
+    YOU are the lead. Play a card.
+AD
+Traceback (most recent call last):
+  File "/home/clayton/Dropbox/projects/PinochleEngine/CLIPinochle2.py", line 155, in <module>
+    game_play(match_points_mod, current_score_mod)
+  File "/home/clayton/Dropbox/projects/PinochleEngine/CLIPinochle2.py", line 97, in game_play
+    comp_card = computer.computer_plays(True)
+  File "/home/clayton/Dropbox/projects/PinochleEngine/pinochle_engine.py", line 217, in computer_plays
+    meld_score, high_meld, non_playable, pinochle = find_best_meld(self.hand, self.trump)
+TypeError: 'NoneType' object is not iterable
+    YOU played: AD		COMPUTER played: 9S
+    COMPUTER has won this trick.
+    The COMPUTER will now meld.
+    | |	|| KC QC || 9S ||
+    Here are the scores:
+    YOU: 40		COMPUTER: 30
+(5)
+    Trump is: AS
+    YOUR cards:
+    | KS JS JS 10H KH JH AC 9C |	|| KH QH || KC QC ||
+    COMPUTER is the lead. It plays:
+    '''
 
 
 # check the suit of a given card. this will regulate the way it is handled
