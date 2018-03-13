@@ -58,7 +58,7 @@ def game_play(match_points, current_scores):
             print('Error with dealer assignment in pinochle_engine!')
             player_hand, comp_hand, stock, trump = 0, 0, 0, 0  # to block pep8 issues with assignment
             exit(1)
-        pe.open_game(trump)  # currently just sets the dix_is_trump value
+        pe.open_game(trump)
         player = pe.Player(player_hand, trump, current_scores[1])
         computer = pe.Computer(comp_hand, trump, current_scores[0])
         # END OPENING ######################################################
@@ -124,12 +124,12 @@ def game_play(match_points, current_scores):
             if pe.Variables.trick_winner == 'player':
                 print_hand(player.get_playable_cards())
                 while True:
-                    attmpt_meld = input('\tWhat do YOU want to meld? Type "none" to skip.\n')
-                    if attmpt_meld == "none":
+                    attempt_meld = input('\tWhat do YOU want to meld? Type "none" to skip.\n')
+                    if attempt_meld == "none":
                         break
                     else:
-                        attmpt_meld = attmpt_meld.split()
-                    if player.set_melds(attmpt_meld):
+                        attempt_meld = attempt_meld.split()
+                    if player.set_melds(attempt_meld):
                         print('\tOkay! YOUR new hand:')
                         print_hand(player.get_playable_cards())
                         break
