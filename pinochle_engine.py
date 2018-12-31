@@ -59,7 +59,7 @@ class Deck:
         
     
     # technically someone is probably cheating if they change this value, but I'm not the boss
-    def set_dix(self, card=self.peek())
+    def set_dix(self, card=self.peek())  # hmmm card=self.peek() might be invalid sytax
         self.dix = card
 
     
