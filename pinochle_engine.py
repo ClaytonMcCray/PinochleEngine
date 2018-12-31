@@ -7,9 +7,12 @@ from random import randint
 # (4) See TODO in CLIPinochle2.py
 #################################################################
 
-raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC', 'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD',
-            '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H', 'AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC',
-            'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD', '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H']
+raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 
+            'KC', 'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD',
+            '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H', 'AS', 
+            '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC',
+            'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD', 
+            '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H']
 
 # Global settings will go here ##################################
 
@@ -32,7 +35,8 @@ class Variables:
     dix = [5]
     pinochle = []  # assigned value at the opening of each game in open_game
     meld_score_values = [40, 20, 20, 20, 150, 100, 80, 60, 40, 10]
-    melds = [royal_marriage, marriage_one, marriage_two, marriage_three, flush, aces, kings, queens, jacks, dix]
+    melds = [royal_marriage, marriage_one, marriage_two, marriage_three, 
+            flush, aces, kings, queens, jacks, dix]
     ############################################################
     trick_winner = ''
     dealer = 'player'  # opening value to be edited by game
@@ -56,7 +60,8 @@ class Player:
 
     def set_melds(self, attempt):
         ind_meld = []  # tmp to hold tokens from attempt after removed from self.hand
-        # make sure that the attempted cards were actually in the players hand; if so, add to ind_meld, pop from hand
+        # make sure that the attempted cards were actually in the players hand; 
+        # if so, add to ind_meld, pop from hand
         for i in attempt:
             for j in self.hand:
                 if i == j:
@@ -235,7 +240,7 @@ class Computer:
                 return get_card_from_rank(self.trump, ranked_hand[0])
 
     def set_melds(self):
-        if hand_contains_melds(self.hand, self.trump):  # hand_contains_melds should return a list
+        if hand_contains_melds(self.hand, self.trump):  # hand_contains_melds should return boolean
             _, tmp_meld, __ = find_best_meld(self.hand, self.trump)
             self.melds.append(tmp_meld)
             # remove melded cards from hand
@@ -282,7 +287,7 @@ def deal(deck):
             counter += 1
 
     stock = deck[counter:]
-    trump = deck[-1]
+    trump = deck[-1]  # TODO shouldn't this be deck[0]?
     return opponent_hand, dealer_hand, stock, trump
 
 
