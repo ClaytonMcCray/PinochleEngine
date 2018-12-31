@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, shuffle
 
 # TODO ########################################################
 # (1) Need to be able to play cards that have already been melded
@@ -7,12 +7,6 @@ from random import randint
 # (4) See TODO in CLIPinochle2.py
 #################################################################
 
-raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 
-            'KC', 'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD',
-            '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H', 'AS', 
-            '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC',
-            'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD', 
-            '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H']
 
 # Global settings will go here ##################################
 
@@ -43,6 +37,47 @@ class Variables:
     lead = 'computer'  # opening value to be edited by game
 
 #################################################################
+
+
+# a Deck in this case is just a special stack that gets dealt from the last index upwards
+# not to be confused with a deque
+class Deck:
+    def __init__(shuffle=True):
+        self.raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 
+                        'KC', 'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD',
+                        '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H', 'AS', 
+                        '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC',
+                        'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD', 
+                        '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H']
+        self.deck = None
+        self.shuffle() if shuffle else self.set_deck(self.raw_deck)
+        self.dix = None  # this will be empty until the user calls set_dix()
+
+
+    def set_deck(self, deck):
+        self.deck = [card for card in deck]
+        
+    
+    # technically someone is probably cheating if they change this value, but I'm not the boss
+    def set_dix(self, card=self.peek())
+        self.dix = card
+
+    
+    def get_dix(self):
+        return self.dix
+
+
+    def shuffle(self):
+        self.deck = [card for card in self.raw_deck]  # deep copy
+        shuffle(self.deck)
+
+    def peek(self, idx=-1):
+        return self.deck[idx]
+
+
+    def deal_card(self):
+        return self.deck.pop()
+
 
 
 class Player:
@@ -257,21 +292,6 @@ class Computer:
 
 
 def shuffle(deck):
-
-    tmp = deck  # so that deck can be returned
-    length_total_deck = len(deck)  # this stops me from hard coding the deck length in. more robust
-    deck = []
-    while True:
-        card = tmp[randint(0, 47)]
-        counter = 0  # there are two of each card in a pinochle deck, this is to count how many of a give are there
-        for x in deck:
-            if x == card:  # if the searched card is already in the deck, it finds out how many
-                counter += 1
-        if counter < 2:
-            deck.append(card)
-        if len(deck) == length_total_deck:
-            break
-    return deck
 
 
 def deal(deck):
