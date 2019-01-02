@@ -1,4 +1,4 @@
-from random import randint, shuffle
+from random import shuffle
 
 # TODO ########################################################
 # (1) Need to be able to play cards that have already been melded
@@ -9,11 +9,8 @@ from random import randint, shuffle
 
 
 # Global settings will go here ##################################
-
-
 class Variables:
     trump_is_dix = False  # this will track if dix is trump
-    stock = []
     # melds ####################################################
     # Note that the pinochle meld is not included because it is independent
     # of trump (and therefore rank values)
@@ -42,16 +39,25 @@ class Variables:
 # a Deck in this case is just a special stack that gets dealt from the last index upwards
 # not to be confused with a deque
 class Deck:
-    def __init__(shuffle=True):
-        self.raw_deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 
+    def __init__(self, shuffle=True):
+        self.deck = ['AS', '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 
                         'KC', 'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD',
                         '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H', 'AS', 
                         '10S', 'KS', 'QS', 'JS', '9S', 'AC', '10C', 'KC',
                         'QC', 'JC', '9C', 'AD', '10D', 'KD', 'QD', 'JD', 
                         '9D', 'AH', '10H', 'KH', 'QH', 'JH', '9H']
-        self.deck = None
-        self.shuffle() if shuffle else self.set_deck(self.raw_deck)
-        self.dix = None  # this will be empty until the user calls set_dix()
+
+        if shuffle: self.shuffle()
+        self.trump = None  # this has to be initialized
+        self.set_trump()
+
+
+    def __len__(self):
+        return len(self.deck)
+
+    
+    def new_deck(self):
+        self.__init__()
 
 
     def set_deck(self, deck):
@@ -59,25 +65,32 @@ class Deck:
         
     
     # technically someone is probably cheating if they change this value, but I'm not the boss
-    def set_dix(self, card=self.peek())  # hmmm card=self.peek() might be invalid sytax
-        self.dix = card
+    def set_trump(self):  # hmmm card=self.peek() might be invalid sytax
+        self.trump = self.peek()
+        # below we set up the global variable trump_is_dix
+        Variables.trump_is_dix = Variables.dix == [get_rank(self.get_trump(), self.get_trump())]
 
     
-    def get_dix(self):
-        return self.dix
+    def get_trump(self):
+        return self.trump
 
 
     def shuffle(self):
-        self.deck = [card for card in self.raw_deck]  # deep copy
         shuffle(self.deck)
 
+
     def peek(self, idx=-1):
-        return self.deck[idx]
+        try:
+            return self.deck[idx]
+        except IndexError:
+            raise IndexError('That index does not exist!')
 
 
     def deal_card(self):
-        return self.deck.pop()
-
+        if len(self.deck) > 0:
+           return self.deck.pop()
+        else:
+           raise IndexError('Deck is empty!')
 
 
 class Player:
@@ -274,6 +287,7 @@ class Computer:
             else:  # play strongest hand not part of existing meld
                 return get_card_from_rank(self.trump, ranked_hand[0])
 
+
     def set_melds(self):
         if hand_contains_melds(self.hand, self.trump):  # hand_contains_melds should return boolean
             _, tmp_meld, __ = find_best_meld(self.hand, self.trump)
@@ -287,28 +301,23 @@ class Computer:
         else:
             return False
 
+
     def get_melds(self):
         return self.melds
 
 
-def shuffle(deck):
-
-
+# deck is of type Deck and should be a ref
 def deal(deck):
     dealer_hand = []
     opponent_hand = []
-    counter = 0
     for _ in range(4):
         for a in range(3):
-            opponent_hand.append(deck[counter])
-            counter += 1
+            opponent_hand.append(deck.deal_card())
         for a in range(3):
-            dealer_hand.append(deck[counter])
-            counter += 1
+            dealer_hand.append(deck.deal_card())
 
-    stock = deck[counter:]
-    trump = deck[-1]  # TODO shouldn't this be deck[0]?
-    return opponent_hand, dealer_hand, stock, trump
+    deck.set_trump()
+    return opponent_hand, dealer_hand
 
 
 def get_rank(trump, card):  # smaller ranks mean more powerful cards
@@ -362,9 +371,6 @@ def get_card_from_rank(trump, rank):
 
 
 def open_game(trump, game_counter=0):
-    if '9' in trump:
-        Variables.trump_is_dix = True
-
     # set up the pinochle score
     qs_rank = get_rank(trump, 'QS')
     jd_rank = get_rank(trump, 'JD')
@@ -373,9 +379,9 @@ def open_game(trump, game_counter=0):
     Variables.meld_score_values.append(40)
 
     if game_counter % 2 == 0:
-        return 'player', 'computer'  # dealer, lead; True = computer, False = player
+        return 'player', 'computer'  # dealer, lead
     else:
-        return 'computer', 'player'  # dealer, lead; True = computer, False = player
+        return 'computer', 'player'  # dealer, lead
 
 
 def hand_contains_melds(hand, trump):
