@@ -95,6 +95,7 @@ class Deck:
 
 class Player:
     def __init__(self, opening_hand, trump, score):
+        self.__type = 'player'
         self.hand = []
         self.set_hand(opening_hand)
         self.trump = trump
@@ -102,6 +103,12 @@ class Player:
         self.score = score
         self.won_cards = []
         self.melds = []
+
+
+    @property
+    def type(self):
+        return self.__type
+
 
     def get_score(self):
         return self.score
@@ -203,6 +210,7 @@ class Player:
 
 class Computer:
     def __init__(self, hand, trump, score):
+        self.__type = 'computer'
         self.score = score
         self.hand = []
         self.set_hand(hand)
@@ -210,6 +218,12 @@ class Computer:
         self.played_cards = []
         self.won_cards = []
         self.melds = []
+
+
+    @property
+    def type(self):
+        return self.__type
+
 
     def get_score(self):
         return self.score
@@ -492,4 +506,14 @@ def get_meld_score(meld_tokens, trump):
         return Variables.meld_score_values[meld_score_index], success
     except NameError:
         return 0, False
+
+
+# winner, loser, and deck are all refs
+def finish_trick(winner, loser, deck, winner_card, loser_card):
+    Variables.lead = winner.type
+    # keeping up with won cards until end of hand
+    winner.set_won_cards([winner_card, loser_card])
+    winner.update_hand(winner_card, deck.deal_card())
+    loser.update_hand(loser_card, deck.deal_card())
+    Variables.trick_winner = winner.type
 

@@ -5,10 +5,13 @@ import pinochle_engine as pe
 
 # useful functions unrelated to actual gameplay ###############
 def print_hand(hand):
-    printable = '\t| '
-    for i in hand[0]:
-        printable += i + ' '
-    printable += '|'
+    printable = ''
+    if len(hand[0]) > 0:  # when we print computer_hand, hand looks like [[], [...]].
+        printable = '\t| '  # so len(hand[0]) is an analogue for whose hand it is
+        for i in hand[0]:   # if it's computers hand, we don't want these extra bars
+            printable += i + ' '
+        printable += '|'
+    
     # Add melds to the right
     printable += '\t'
     for i in hand[1]:
@@ -80,20 +83,11 @@ def game_play(match_points, current_scores):
                 print('\tYOU played: ' + player_card + '\t\tCOMPUTER played: ' + comp_card)
                 if pe.determine_winner(player_card, comp_card, deck.get_trump()):
                     print('\tYOU have won this trick!')
-                    pe.Variables.lead = 'player'
-                    # to keep track of the cards a player has won until the end of the hand
-                    player.set_won_cards([player_card, comp_card])
-                    player.update_hand(player_card, deck.deal_card())
-                    computer.update_hand(comp_card, deck.deal_card())
-                    pe.Variables.trick_winner = 'player'
+                    pe.finish_trick(player, computer, deck, player_card, comp_card)
                 else:
                     print('\tCOMPUTER has won this trick.')
-                    pe.Variables.lead = 'computer'
-                    # to keep track of the cards a player has won until the end of the hand
-                    computer.set_won_cards([player_card, comp_card])
-                    computer.update_hand(comp_card, deck.deal_card())
-                    player.update_hand(player_card, deck.deal_card())
-                    pe.Variables.trick_winner = 'computer'
+                    pe.finish_trick(computer, player, deck, comp_card, player_card)
+
             else:
                 print('\tCOMPUTER is the lead. It plays:')
                 comp_card = computer.computer_plays(True)
@@ -103,34 +97,24 @@ def game_play(match_points, current_scores):
                 print('\tYOU played: ' + player_card + '\t\tCOMPUTER played: ' + comp_card)
                 if pe.determine_winner(comp_card, player_card, deck.get_trump()):
                     print('\tCOMPUTER has won this trick!')
-                    pe.Variables.lead = 'computer'
-                    # to keep track of the cards a player has won until the end of the hand
-                    computer.set_won_cards([player_card, comp_card])
-                    computer.update_hand(comp_card, deck.deal_card())
-                    player.update_hand(player_card, deck.deal_card())
-                    pe.Variables.trick_winner = 'computer'
+                    pe.finish_trick(computer, player, deck, comp_card, player_card)
                 else:
                     print('\tYOU have won this trick!')
-                    pe.Variables.lead = 'player'
-                    # to keep track of the cards a player has won until the end of the hand
-                    player.set_won_cards([player_card, comp_card])
-                    player.update_hand(player_card, deck.deal_card())
-                    computer.update_hand(comp_card, deck.deal_card())
-                    pe.Variables.trick_winner = 'player'
+                    pe.finish_trick(player, computer, deck, player_card, comp_card)
+
             # END TRICK TAKING ###########################################
             # TODO in The Play
             # (3) check that won cards are being collected with print statements
             # (5) Test the new player.set_melds(). Also the computer.set_melds().
-            # (6) Fix annoying bars around computer.set_melds() printout from above
             # BEGIN MELDING ##############################################
             if pe.Variables.trick_winner == 'player':
                 print_hand(player.get_playable_cards())
                 while True:
                     attempt_meld = input('\tWhat do YOU want to meld? Type "none" to skip.\n')
-                    if attempt_meld == "none":
-                        break
-                    else:
-                        attempt_meld = attempt_meld.split()
+                    # below we either tokenize meld values or break out of meld loop
+                    attempt_meld = attempt_meld.split() if attempt_meld != "none" else None
+                    if attempt_meld is None: break
+
                     if player.set_melds(attempt_meld):
                         print('\tOkay! YOUR new hand:')
                         print_hand(player.get_playable_cards())

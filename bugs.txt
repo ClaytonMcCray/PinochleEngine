@@ -1,0 +1,6 @@
+1) when a pinochle is melded, the engine won't allow a marriage meld from a KS in hand
+    * It might be the case that remelding cards isn't implemented at all.
+
+2) On the opening trick, the computer led. Trump was 10C, computer played 10C on opening trick. Then it
+    played 10C again on second trick. That means there were 3 10Cs, which is obviously problematic.
+
